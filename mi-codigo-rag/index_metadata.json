@@ -1,0 +1,15 @@
+{
+    "contents_delta_uri": "gs://base-conocimiento-sagalo/vector-search-contents",
+    "config": {
+      "dimensions": 768,
+      "approximate_neighbors_count": 10,
+      "distance_measure_type": "DOT_PRODUCT_DISTANCE",
+      "shard_size": "SHARD_SIZE_SMALL",
+      "algorithm_config": {
+        "tree_ah_config": {
+          "leaf_node_embedding_count": 1000,
+          "leaf_nodes_to_search_percent": 7
+        }
+      }
+    }
+  }

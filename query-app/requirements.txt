@@ -1,0 +1,7 @@
+streamlit==1.35.0
+google-cloud-aiplatform==1.56.0
+langchain-google-vertexai==1.0.3
+langchain==0.1.20
+langchain-community==0.0.38
+python-docx
+pypdf
