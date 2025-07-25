@@ -13,9 +13,9 @@ PROJECT_ID = "gen-lang-client-0054484033"
 REGION = "us-central1"
 QUARANTINE_BUCKET_NAME = "base-de-conocimiento-sagalo-cuarentena"
 DOCUMENT_AI_PROCESSOR_ID = "85404cce273a8c03" # Debes crear un procesador en Document AI
-VECTOR_SEARCH_INDEX_ID = "4565163482432929792"
-VECTOR_SEARCH_ENDPOINT_ID = "2391556537668599808"
-VECTOR_SEARCH_DEPLOYED_INDEX_ID = "despliegue_sagalo_v3"
+VECTOR_SEARCH_INDEX_ID = "2293337163959369728"
+VECTOR_SEARCH_ENDPOINT_ID = "563620655514255360"
+VECTOR_SEARCH_DEPLOYED_INDEX_ID = "extremo-sagalo-v1"
 
 # --- Inicialización del Logging Profesional ---
 logging_client = google.cloud.logging.Client()
@@ -68,7 +68,7 @@ def process_ingest_update(bucket_name, file_name):
         logging.info(f"Archivo original '{file_name}' descargado a '{download_path}'")
 
         if original_extension in ['.doc', '.docx']:
-            logging.info(f"Iniciando conversión de '{file_name}' a PDF...")
+            logging.info(f"Iniciando conversión de '{file_name}' a PDF con LibreOffice...")
             process = subprocess.run(
                 ["libreoffice", "--headless", "--convert-to", "pdf", "--outdir", temp_dir, download_path],
                 timeout=300, capture_output=True, text=True
@@ -102,7 +102,6 @@ def process_ingest_update(bucket_name, file_name):
         if not extracted_text:
             raise ValueError("La extracción de texto no devolvió contenido.")
 
-        # --- El resto del proceso continúa exactamente igual ---
         logging.info("Limpiando boilerplate con Gemini...")
         cleaned_text = clean_text_with_gemini(extracted_text)
         logging.info("Extrayendo metadatos con Gemini...")
@@ -140,7 +139,7 @@ def process_ingest_update(bucket_name, file_name):
         if os.path.exists(pdf_to_clean):
             os.remove(pdf_to_clean)
         logging.info("Limpieza de archivos temporales completada.")
-        
+
 @retry(stop=stop_after_attempt(3), wait=wait_exponential(multiplier=1, min=4, max=10))
 def extract_text_with_document_ai(gcs_uri):
     """Extrae texto de un documento PDF usando Document AI."""

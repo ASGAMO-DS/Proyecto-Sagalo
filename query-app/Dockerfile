@@ -9,7 +9,7 @@ COPY requirements.txt ./
 RUN pip install --no-cache-dir -r requirements.txt
 
 # Copiar el resto del código de la aplicación
-COPY . .
+COPY app.py .
 
 # Exponer el puerto que usa Streamlit
 EXPOSE 8080

@@ -7,9 +7,9 @@ from langchain_community.vectorstores import MatchingEngine
 # --- CONFIGURACIÓN (¡LLENA ESTOS VALORES!) ---
 PROJECT_ID = "gen-lang-client-0054484033"
 REGION = "us-central1"
-VECTOR_SEARCH_INDEX_ID = "4565163482432929792"
-VECTOR_SEARCH_ENDPOINT_ID = "2391556537668599808"
-VECTOR_SEARCH_DEPLOYED_INDEX_ID = "despliegue_sagalo_v3"
+VECTOR_SEARCH_INDEX_ID = "2293337163959369728"
+VECTOR_SEARCH_ENDPOINT_ID = "563620655514255360"
+VECTOR_SEARCH_DEPLOYED_INDEX_ID = "extremo-sagalo-v1"
 
 
 st.set_page_config(page_title="Asistente Legal IA", layout="wide")
@@ -19,14 +19,13 @@ st.title("Asistente Legal IA ⚖️")
 def get_retriever():
     """Inicializa y cachea el retriever de Vertex AI Vector Search."""
     embeddings = VertexAIEmbeddings(
-    model_name="text-embedding-004",
-    project=PROJECT_ID,
-    location=REGION
-)
+        model_name="text-embedding-004",
+        project=PROJECT_ID,
+        location=REGION
+    )
     
-    # El bucket de staging es necesario para ciertas operaciones de MatchingEngine.
-    # Se puede usar el bucket de cuarentena o crear uno nuevo.
-    STAGING_BUCKET = f"gs://{PROJECT_ID}-vs-staging"
+    # Usaremos uno de tus buckets existentes para el staging.
+    STAGING_BUCKET = "gs://base-de-conocimiento-sagalo-cuarentena"
 
     vector_store = MatchingEngine.from_components(
         project_id=PROJECT_ID,
@@ -34,7 +33,7 @@ def get_retriever():
         gcs_bucket_name=STAGING_BUCKET,
         embedding=embeddings,
         index_id=VECTOR_SEARCH_INDEX_ID,
-        endpoint_id=VECTOR_SEARCH_ENDPOINT_ID
+        endpoint_id=VECTOR_SEARCH_ENDPOINT_ID,
     )
     return vector_store.as_retriever(search_kwargs={"k": 5})
 
@@ -42,14 +41,15 @@ def get_retriever():
 def get_chain(_retriever):
     """Inicializa y cachea la cadena conversacional RAG."""
     llm = ChatVertexAI(
-    model_name="gemini-2.5-flash-lite",
-    project=PROJECT_ID,
-    location=REGION
-)
+        # --- CORRECCIÓN 1: USAR EL NOMBRE DEL MODELO CORRECTO ---
+        model_name="gemini-2.0-flash-lite-001",
+        project=PROJECT_ID,
+        location=REGION
+    )
     memory = ConversationBufferMemory(
         memory_key="chat_history", 
         return_messages=True, 
-        output_key='answer' # Especificar la clave de salida para la memoria
+        output_key='answer'
     )
 
     return ConversationalRetrievalChain.from_llm(
@@ -57,7 +57,7 @@ def get_chain(_retriever):
         retriever=_retriever,
         memory=memory,
         return_source_documents=True,
-        output_key='answer', # Especificar la clave de salida para la cadena
+        output_key='answer',
         verbose=True
     )
 
@@ -88,12 +88,10 @@ def main():
                     response = conversation_chain.invoke({"question": prompt})
                     answer = response["answer"]
                     
-                    # Formatear y mostrar los documentos fuente
                     source_documents = response.get("source_documents", [])
                     if source_documents:
                         sources_text = "\n\n---\n**Fuentes:**\n"
                         for doc in source_documents:
-                            # Asumimos que el nombre del archivo está en los metadatos
                             source_file = doc.metadata.get('source_file', 'Desconocido')
                             sources_text += f"- {source_file}\n"
                         answer += sources_text
